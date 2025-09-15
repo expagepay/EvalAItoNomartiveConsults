@@ -1,0 +1,9 @@
+crewai
+langchain_openai
+langchain
+ragas==0.3.3
+bs4
+logging
+python-dotenv
+fpdf
+pandas
