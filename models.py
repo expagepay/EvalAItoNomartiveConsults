@@ -3,12 +3,14 @@ import time
 import requests
 import json
 from retriever import buscar_lexml
+from dotenv import load_dotenv
+import os
 
-OPENROUTER_API_KEY = "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"
+load_dotenv()
 
 def chamar_openrouter(modelo: str, system_prompt: str, user_prompt: str, json_output: bool = False):
     url = "https://openrouter.ai/api/v1/chat/completions"
-    headers = {"Authorization": f"Bearer {OPENROUTER_API_KEY}"}
+    headers = {"Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}"}
     
     messages = [
         {"role": "system", "content": system_prompt},
@@ -22,9 +24,7 @@ def chamar_openrouter(modelo: str, system_prompt: str, user_prompt: str, json_ou
     if json_output:
         payload["response_format"] = {"type": "json_object"}
 
-    print(f"🔄 [API] Chamando {modelo}...")
-    print(f"📋 [API] System prompt: {len(system_prompt)} chars")
-    print(f"📋 [API] User prompt: {len(user_prompt)} chars")
+    print(f"Chamando {modelo.split('/')[-1]}...")
     
     inicio = time.time()
     resp = requests.post(url, headers=headers, json=payload).json()
@@ -32,28 +32,29 @@ def chamar_openrouter(modelo: str, system_prompt: str, user_prompt: str, json_ou
     
     try:
         conteudo = resp["choices"][0]["message"]["content"]
-        print(f"✅ [API] Resposta recebida de {modelo} em {fim - inicio:.2f}s")
+        print(f"Resposta recebida em {fim - inicio:.2f}s")
     except KeyError:
-        print(f"❌ [API] Erro na resposta de {modelo}: {resp}")
+        print(f"ERRO na resposta: {resp}")
         conteudo = ""
         
     tempo = fim - inicio
     
     return conteudo, tempo
 
-def consultar_modelos(pergunta: str, system_prompts: dict, num_queries: int = 3):
-    print(f"🚀 [MODELS] Iniciando consulta para: '{pergunta}'")
+def consultar_modelos(pergunta: str, system_prompts: dict, num_queries: int = 3, modelos: list = ["meta-llama/llama-3.3-70b-instruct", "mistralai/mistral-7b-instruct"]):
+    print(f"Iniciando consulta: '{pergunta[:50]}...'")
     respostas = {}
     logs = {}
     queries_geradas = {}
     contextos = {}
 
-    for modelo in ["meta-llama/llama-3-8b-instruct", "mistralai/mistral-7b-instruct"]:
-        print(f"\n📋 [MODELS] Processando modelo: {modelo}")
+    for modelo in modelos:
+        modelo_nome = modelo.split('/')[-1]
+        print(f"\nProcessando {modelo_nome}")
         
         # 1. Gerar Queries com System Prompt
-        print(f"🔍 [MODELS] Gerando {num_queries} queries de busca...")
-        user_prompt_queries = f"Para a pergunta '{pergunta}', gere {num_queries} queries de busca em português. As queries devem estar em um formato JSON, como uma lista de strings na chave 'queries'. Exemplo: {{'queries': ['query 1', 'query 2']}}"
+        print(f"Gerando {num_queries} queries...")
+        user_prompt_queries = f"Para a pergunta '{pergunta}', gere exatamente {num_queries} queries de busca em português. As queries devem estar em um formato JSON, como uma lista de strings na chave 'queries'. Exemplo: {{'queries': ['query 1', 'query 2']}}"
         
         queries_json_str, tempo_queries = chamar_openrouter(
             modelo, 
@@ -64,32 +65,30 @@ def consultar_modelos(pergunta: str, system_prompts: dict, num_queries: int = 3)
         
         try:
             queries = json.loads(queries_json_str).get("queries", [])
-            print(f"✅ [MODELS] {len(queries)} queries geradas: {queries}")
+            print(f"Queries geradas: {len(queries)}")
         except (json.JSONDecodeError, AttributeError):
-            print(f"❌ [MODELS] Erro ao processar queries JSON para {modelo}")
+            print(f"ERRO ao processar queries JSON")
             queries = []
 
         queries_geradas[modelo] = queries
         
         # 2. Buscar Contexto
-        print(f"🔎 [MODELS] Buscando contexto para {len(queries)} queries...")
+        print(f"Buscando contexto...")
         contexto_modelo = []
-        for i, query in enumerate(queries, 1):
-            print(f"   Query {i}/{len(queries)}: '{query}'")
+        for query in queries[:num_queries]:
             resultados = buscar_lexml(query)
             contexto_modelo.extend(resultados)
-            print(f"   → {len(resultados)} resultados encontrados")
         
-        print(f"📚 [MODELS] Total de contextos coletados: {len(contexto_modelo)}")
+        print(f"Contextos coletados: {len(contexto_modelo)}")
         contextos[modelo] = contexto_modelo
 
         # 3. Gerar Resposta com System Prompt
-        print(f"💭 [MODELS] Gerando resposta com contexto...")
+        print("Gerando resposta...")
         MAX_CONTEXT_LENGTH = 28000
         contexto_str = json.dumps(contexto_modelo)
         if len(contexto_str) > MAX_CONTEXT_LENGTH:
             contexto_str = contexto_str[:MAX_CONTEXT_LENGTH]
-            print(f"⚠️ [MODELS] Contexto truncado para {MAX_CONTEXT_LENGTH} caracteres")
+            print(f"Contexto truncado para {MAX_CONTEXT_LENGTH} chars")
 
         user_prompt_resposta = f"Pergunta: {pergunta}\nContexto: {contexto_str}\nResponda de forma clara e objetiva."
         
@@ -106,7 +105,7 @@ def consultar_modelos(pergunta: str, system_prompts: dict, num_queries: int = 3)
             "tokens_resposta": len(resposta.split())
         }
         
-        print(f"✅ [MODELS] Modelo {modelo} processado - Resposta: {len(resposta)} chars, {logs[modelo]['tokens_resposta']} tokens")
+        print(f"{modelo_nome} processado: {len(resposta)} chars, {logs[modelo]['tokens_resposta']} tokens")
 
-    print(f"\n🎯 [MODELS] Consulta concluída para todos os modelos")
+    print("Consulta concluída")
     return respostas, logs, queries_geradas, contextos

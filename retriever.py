@@ -14,20 +14,17 @@ BASE_URL = "https://www.lexml.gov.br/busca/search"
 
 
 def buscar_lexml(termo: str, pagina_inicial: int = 0, quantidade: int = 10, resultados_por_pagina: int = 10, autoridade: str = None):
-    # Mesmos parâmetros, com debug para prints
     resultados = []
     pagina_inicial = pagina_inicial
     total_coletados = 0
-    print(f"🔍 Iniciando busca por '{termo}' com até {quantidade} resultados (pagina '{pagina_inicial}')).")
+    print(f"Buscando '{termo}' (max {quantidade} resultados)")
     termo_encoded = urllib.parse.quote(str(termo))
 
-    logger.info(f"Iniciando busca por '{termo}' com até {quantidade} resultados (pagina '{pagina_inicial}')).")
+    logger.info(f"Buscando '{termo}' (max {quantidade} resultados)")
 
-    while total_coletados < quantidade: #pagina_inicial < max_paginas and
+    while total_coletados < quantidade:
         pagina_inicial += 1
         start_doc = 1 + (pagina_inicial- 1) * resultados_por_pagina
-
-        print(f"🔍 Buscando página {pagina_inicial}, startDoc={start_doc}")
 
         # Construir URL com filtro opcional de autoridade
         url = f"{BASE_URL}?keyword={termo_encoded}"
@@ -45,10 +42,10 @@ def buscar_lexml(termo: str, pagina_inicial: int = 0, quantidade: int = 10, resu
 
             soup = BeautifulSoup(resp.text, 'html.parser')  # Adicione 'html5lib' se tiver issues: 'html5lib'
             
-            # MODIFICAÇÃO ESTREITAR SELETOR: Foce na div.results e encontre docHit dentro
+            # Focar na div.results e encontrar docHit dentro
             results_div = soup.find('div', class_='results')
             if not results_div:
-                print(f"❌ Estrutura 'results' não encontrada na página {pagina_inicial}.")
+                print(f"Estrutura 'results' não encontrada na página {pagina_inicial}")
                 break
 
             doc_hits = results_div.find_all('div', class_='docHit')
@@ -81,8 +78,6 @@ def buscar_lexml(termo: str, pagina_inicial: int = 0, quantidade: int = 10, resu
                             key_text = key_tag.get_text().strip().lower()
                             key = ''.join(c for c in key_text if c.isalpha())
                             value = value_cell.get_text(strip=True)
-                            
-                            #print(f"🔍 DEBUG: Linha {j+1} - Campo: '{key}' = '{value[:30]}...'")
                             
                             if key == 'autoridade' and not autoridade_global:
                                 autoridade_global = value
@@ -163,18 +158,16 @@ def buscar_lexml(termo: str, pagina_inicial: int = 0, quantidade: int = 10, resu
                 if dados["titulo"] != "Título não disponível" and total_coletados < quantidade:
                     resultados.append(dados)
                     total_coletados += 1
-                    print(f"✅ Coletei {total_coletados} resultados.")
 
             # Verificar "Próxima"
             next_link = soup.find('a', string='Próxima')
             if not next_link:
-                print(f"🚫 Sem link 'Próxima' em {pagina_inicial}.")
                 break
 
         except Exception as e:
-            print(f"❌ Erro na página {pagina_inicial}: {e}")
+            print(f"ERRO na página {pagina_inicial}: {e}")
             break
 
-    logger.info(f"Busca concluída. Total coletados: {total_coletados}, Páginas processadas: {pagina_inicial}")
-    #print(resultados)
+    logger.info(f"Busca concluída: {total_coletados} resultados, {pagina_inicial} páginas")
+    print(f"Coletados: {total_coletados} resultados")
     return resultados
