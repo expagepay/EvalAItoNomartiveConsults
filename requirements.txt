@@ -1,0 +1,11 @@
+langchain_openai
+langchain
+langchain_huggingface
+ragas==0.2.9
+bs4
+python-dotenv
+pandas
+bert-score
+rouge_score
+sentence_transformers
+streamlit

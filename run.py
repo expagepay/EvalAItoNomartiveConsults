@@ -56,10 +56,33 @@ Diretrizes:
     parser.add_argument('--quick_eval', action='store_true', help='Usa conjunto padrão de perguntas e ground truths para avaliação rápida (sobrescreve --perguntas e --ground_truth)')
     parser.add_argument('--num_queries', type=int, default=3, help='Número máximo de queries que os modelos podem gerar')
     parser.add_argument('--system_queries', type=str, default=default_system_queries, help='System prompt para geração de queries')
+    parser.add_argument('--system_queries_file', type=str, help='Arquivo com system prompt para queries (opcional, sobrescreve --system_queries)')
     parser.add_argument('--system_resposta', type=str, default=default_system_resposta, help='System prompt para geração de respostas')
+    parser.add_argument('--system_resposta_file', type=str, help='Arquivo com system prompt para respostas (opcional, sobrescreve --system_resposta)')
     parser.add_argument('--modelos', nargs='+', default=['mistralai/mistral-7b-instruct', 'meta-llama/llama-3.3-70b-instruct'], help='Lista de modelos a serem comparados')
     
     args = parser.parse_args()
+    
+    # Carregar system prompts
+    if args.system_queries_file:
+        try:
+            with open(args.system_queries_file, 'r', encoding='utf-8') as f:
+                system_queries = f.read()
+        except Exception as e:
+            print(f"Erro ao ler arquivo de system queries: {e}")
+            system_queries = default_system_queries
+    else:
+        system_queries = args.system_queries
+    
+    if args.system_resposta_file:
+        try:
+            with open(args.system_resposta_file, 'r', encoding='utf-8') as f:
+                system_resposta = f.read()
+        except Exception as e:
+            print(f"Erro ao ler arquivo de system resposta: {e}")
+            system_resposta = default_system_resposta
+    else:
+        system_resposta = args.system_resposta
     
     # Prioridade: quick_eval > csv_file > argumentos
     if args.quick_eval:
@@ -88,8 +111,8 @@ Diretrizes:
         'ground_truth': ground_truths,
         'num_queries': args.num_queries,
         'system_prompts': {
-            'queries': args.system_queries,
-            'resposta': args.system_resposta
+            'queries': system_queries,
+            'resposta': system_resposta
         },
         'modelos': args.modelos
     }
