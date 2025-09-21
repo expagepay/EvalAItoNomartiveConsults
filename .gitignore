@@ -2,5 +2,5 @@
 results/
 __pycache__/
 *.pyc
-EvalAI_Notebook.ipynb
 venv/
+tests/

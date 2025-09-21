@@ -60,6 +60,7 @@ Diretrizes:
     parser.add_argument('--system_resposta', type=str, default=default_system_resposta, help='System prompt para geração de respostas')
     parser.add_argument('--system_resposta_file', type=str, help='Arquivo com system prompt para respostas (opcional, sobrescreve --system_resposta)')
     parser.add_argument('--modelos', nargs='+', default=['mistralai/mistral-7b-instruct', 'meta-llama/llama-3.3-70b-instruct'], help='Lista de modelos a serem comparados')
+    parser.add_argument('--modo_contexto', type=str, default='truncar', choices=['truncar', 'resumir'], help='Modo de tratamento de contexto quando excede o limite de tokens: "truncar" (reduz regressivamente o tamanho: 100k → 50k → 28k) ou "resumir" (gera resumo com Gemini 2.5 Flash)')
     
     args = parser.parse_args()
     
@@ -114,7 +115,8 @@ Diretrizes:
             'queries': system_queries,
             'resposta': system_resposta
         },
-        'modelos': args.modelos
+        'modelos': args.modelos,
+        'modo_contexto': args.modo_contexto
     }
     
     # Executar pipeline

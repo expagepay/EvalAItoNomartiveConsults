@@ -98,6 +98,15 @@ with col2:
 
 modelos_selecionados = [modelos_disponiveis[modelo_a], modelos_disponiveis[modelo_b]]
 
+# Modo de Contexto
+st.subheader("📄 Modo de Tratamento de Contexto")
+modo_contexto = st.selectbox(
+    "Modo de Contexto",
+    ["truncar", "resumir"],
+    index=0,
+    help='Modo de tratamento de contexto quando excede o limite de tokens: "truncar" (reduz regressivamente o tamanho: 100k → 50k → 28k) ou "resumir" (gera resumo com Gemini 2.5 Flash)'
+)
+
 # Parâmetros opcionais
 num_queries = st.number_input("Número de Queries", min_value=1, max_value=10, value=3)
 
@@ -127,6 +136,10 @@ if st.button("Executar Avaliação"):
 
     args.extend(["--num_queries", str(num_queries)])
     
+    # Alternativa: passar como lista única
+    args.extend(["--modelos"] + modelos_selecionados)
+    args.extend(["--modo_contexto", modo_contexto])
+
     # Tratar system prompts - usar arquivos se tiverem quebras de linha
     if '\n' in system_queries:
         with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix=".txt", encoding='utf-8') as tmp:
@@ -142,16 +155,14 @@ if st.button("Executar Avaliação"):
     else:
         args.extend(["--system_resposta", system_resposta])
     
-    # Alternativa: passar como lista única
-    args.extend(["--modelos"] + modelos_selecionados)
-
     # Debug: mostrar modelos e argumentos
     st.write(f"**Modelos selecionados:** {modelos_selecionados}")
+    st.write(f"**Modo de contexto:** {modo_contexto}")
     st.write(f"**Argumentos:** {' '.join(args)}")
 
     # Definir API key no ambiente
     env = os.environ.copy()
-    env['OPENROUTER_API_KEY'] = api_key
+    env['OPENAI_API_KEY'] = api_key
 
     # Executar
     st.info("Iniciando avaliação... Isso pode levar alguns minutos.")
@@ -200,6 +211,7 @@ if st.button("Executar Avaliação"):
                     'Modelo': modelo,
                     'Faithfulness': f"{stat['faithfulness_media']:.3f}",
                     'Relevancy': f"{stat['answer_relevancy_media']:.3f}",
+                    'Context Precision': f"{stat.get('context_precision_media', 0.0):.3f}",
                     'ROUGE-1': f"{stat['rouge_1_f1_media']:.3f}",
                     'BERTScore': f"{stat['bertscore_f1_media']:.3f}",
                     'Tempo Médio (s)': f"{stat['tempo_resposta_medio']:.2f}"
@@ -207,6 +219,31 @@ if st.button("Executar Avaliação"):
             df = pd.DataFrame(data)
             st.table(df)
 
+            # Issues Identificados
+            st.subheader("📋 Issues Identificados")
+            try:
+                results_path = os.path.join(Path(__file__).parent.parent, 'results', 'resultados.json')
+                with open(results_path, 'r', encoding='utf-8') as f:
+                    resultados = json.load(f)
+                
+                issues_por_modelo = {}
+                for res in resultados:
+                    modelo = res['modelo']
+                    issues = res.get('issues', [])
+                    if issues:
+                        if modelo not in issues_por_modelo:
+                            issues_por_modelo[modelo] = []
+                        issues_por_modelo[modelo].extend(issues)
+                
+                if issues_por_modelo:
+                    for modelo, issues in issues_por_modelo.items():
+                        st.write(f"**{modelo}:**")
+                        for issue in issues:
+                            st.write(f"- {issue}")
+                else:
+                    st.write("Nenhum issue identificado.")
+            except Exception as e:
+                st.write(f"Erro ao carregar issues: {e}")
     except Exception as e:
         st.error(f"Erro durante execução: {e}")
 

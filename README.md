@@ -2,14 +2,24 @@
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1HThgioW620LWUm4G6vCqE17_tcxtsdUf?usp=sharing)
 
-Uma ferramenta para avaliação comparativa de modelos de IA em consultas jurídicas brasileiras. O sistema gera queries de busca, coleta contextos legais, produz respostas e avalia métricas como faithfulness, relevância e similaridade textual.
+Uma ferramenta completa para avaliação comparativa de modelos de IA em consultas jurídicas brasileiras. O sistema automatiza o pipeline RAG (Retrieval-Augmented Generation): gera queries de busca, coleta contextos legais da LexML, produz respostas e avalia múltiplas métricas de qualidade.
 
-## Pré-requisitos
+## 🚀 Recursos Principais
 
-- **Python 3.8+** instalado no sistema.
-- Chave de API válida para [OpenRouter](https://openrouter.ai/) (para acesso aos modelos de IA).
+- **Avaliação Automática**: Compare modelos de IA em tarefas jurídicas brasileiras.
+- **Métricas Abrangentes**: Faithfulness, Relevancy, Context Precision, ROUGE, BERTScore.
+- **Estratégias de Contexto**: Truncamento regressivo ou resumo inteligente para limites de tokens.
+- **Interface Web**: Fácil de usar via Streamlit, sem necessidade de código.
+- **Flexibilidade**: Modelos personalizados, perguntas customizadas, ground truths opcionais.
+- **Relatórios Detalhados**: Resultados em JSON, CSV e rankings comparativos.
 
-## Instalação
+## 📋 Pré-requisitos
+
+- **Python 3.8+** instalado.
+- **Chave de API do OpenRouter** (gratuita para testes, paga para uso intensivo).
+- **Conexão com internet** para acesso aos modelos e busca de contextos.
+
+## 🛠️ Instalação
 
 1. **Clone o repositório**:
    ```bash
@@ -17,89 +27,236 @@ Uma ferramenta para avaliação comparativa de modelos de IA em consultas juríd
    cd EvalAItoNomartiveConsults
    ```
 
-2. **Configure o ambiente virtual**:
-   - Execute o launcher da interface web (ele cria o venv automaticamente):
+2. **Configure o ambiente**:
+   - Use o launcher da interface web (cria venv automaticamente):
      ```bash
      cd web_interface
      python launcher.py
      ```
-     Isso cria um venv na raiz do projeto e instala as dependências de `requirements.txt`.
+     Isso instala `requirements.txt` e configura o ambiente.
 
 3. **Configure a API**:
-   - Crie um arquivo `.env` na raiz do projeto com:
+   - Crie `.env` na raiz:
      ```
-     OPENAI_API_KEY=sk-or-v1-sua-chave-aqui
+     OPENAI_API_KEY=sk-or-v1-sua-chave-openrouter
      ```
-   - Obtenha a chave em [OpenRouter Keys](https://openrouter.ai/keys).
+   - Obtenha em [OpenRouter Keys](https://openrouter.ai/keys).
 
-## Uso
+4. **Configure cache (opcional, acelera inicializações)**:
+   - Adicione ao `.env`:
+     ```
+     HF_HUB_CACHE=./HF_Cache
+     ```
 
-### Interface Web (Recomendado para Iniciantes)
+## 🎯 Uso Básico
 
-Execute o launcher para iniciar a interface Streamlit:
+### Interface Web (Recomendado)
+
 ```bash
 cd web_interface
 python launcher.py
 ```
-Acesse `http://localhost:8501` no navegador para configurar perguntas, modelos e executar avaliações de forma interativa.
+Acesse `http://localhost:8501`. Configure perguntas, modelos e execute avaliações interativamente.
 
 ### CLI (Linha de Comando)
 
-Use `run.py` para execuções programáticas:
-
 ```bash
-python run.py --perguntas "Quais são os direitos do consumidor no Brasil?" --ground_truth "Resposta ideal aqui" --num_queries 3 --modelos meta-llama/llama-3.3-70b-instruct mistralai/mistral-7b-instruct
+# Avaliação rápida com perguntas padrão
+python run.py --quick_eval
+
+# Com perguntas customizadas
+python run.py --perguntas "O que é LGPD?" "Direitos do consumidor"
+
+# Com arquivo CSV (colunas: pergunta, ground_truth)
+python run.py --csv_file meu_arquivo.csv
+
+# Ver opções completas
+python run.py --help
 ```
 
-#### Argumentos Principais
-- `--perguntas`: Lista de perguntas (ex: `--perguntas "Pergunta 1" "Pergunta 2"`).
-- `--ground_truth`: Resposta ideal opcional para avaliação.
-- `--num_queries`: Número de queries por modelo (padrão: 3).
-- `--system_queries`: Prompt para geração de queries.
-- `--system_resposta`: Prompt para geração de respostas.
-- `--modelos`: Modelos a comparar (ex: `meta-llama/llama-3.3-70b-instruct`).
+### Notebook Colab
 
-Exemplo completo:
+Abra o [notebook Colab](https://colab.research.google.com/drive/1HThgioW620LWUm4G6vCqE17_tcxtsdUf?usp=sharing) para execução na nuvem.
+
+## ⚙️ Configurações Avançadas
+
+### Modelos Personalizados
+
+Use qualquer modelo do [OpenRouter](https://openrouter.ai/models). Exemplos:
+
 ```bash
-python run.py --perguntas "O que é a LGPD?" --num_queries 2 --modelos mistralai/mistral-7b-instruct
+# Modelos padrão
+python run.py --modelos meta-llama/llama-3.3-70b-instruct mistralai/mistral-7b-instruct
+
+# Modelos customizados
+python run.py --modelos openai/gpt-4o anthropic/claude-3.5-sonnet google/gemini-pro-1.5
 ```
 
-### Resultados
+**Dicas**:
+- Modelos maiores (>100k tokens) são melhores para contexto jurídico.
+- Teste limites: GPT-4 ~128k, Claude 3 ~200k, Gemini 1.5 ~1M.
+- Custos variam; verifique no OpenRouter.
 
-Os resultados são salvos em `results/`:
-- `resultados.json`: Dados brutos detalhados.
-- `comparacao_modelos.json`: Relatório de comparação com rankings.
-- `resultados.csv`: Tabela para análise em planilhas.
+### Número de Queries (`num_queries`)
 
-## Métricas Avaliadas
+Controla quantas queries de busca o modelo gera por pergunta.
 
-O sistema calcula métricas para comparar a qualidade das respostas:
+```bash
+# Padrão: 3 queries
+python run.py --num_queries 5  # Mais queries = mais contexto, mas mais lento
+```
 
-- **Faithfulness**: Verifica se a resposta é fiel aos contextos fornecidos (usando RAGAS).
-- **Answer Relevancy**: Avalia se a resposta é relevante à pergunta (usando RAGAS).
-- **ROUGE-1/2 F1**: Mede similaridade textual com ground truth (precisão e recall).
-- **BERTScore F1**: Similaridade semântica baseada em embeddings BERT.
+**Recomendação**: 3-5 para equilíbrio entre qualidade e velocidade.
 
-Scores variam de 0.0 a 1.0 (maior = melhor). Métricas = 0.0 indicam falhas (ex: contextos vazios).
+### Modo de Tratamento de Contexto (`modo_contexto`)
 
-## Guia Geral
+Quando o contexto excede limites de tokens, escolha a estratégia:
 
-1. **Pipeline de Execução**:
-   - Geração de queries de busca jurídica.
-   - Coleta de contextos via API do LexML.
-   - Geração de respostas com base nos contextos.
-   - Avaliação automática das métricas.
+- **`truncar`** (padrão): Reduz regressivamente (700k → 100k → 50k → 28k chars).
+- **`resumir`**: Gera resumo com Gemini 2.5 Flash, preservando essência.
 
-2. **Modelos Suportados**:
-   - Qualquer modelo via OpenRouter (ex: Llama, Mistral, Gemini).
-   - Recomendado: `meta-llama/llama-3.3-70b-instruct`, `mistralai/mistral-7b-instruct`.
+```bash
+# Truncamento regressivo
+python run.py --modo_contexto truncar
 
-3. **Limitações**:
-   - Dependente de conectividade com OpenRouter.
-   - Contextos limitados a 25k caracteres (resumidos se maior).
-   - Avaliações em português para legislação brasileira.
+# Resumo inteligente
+python run.py --modo_contexto resumir
+```
 
-4. **Dicas**:
-   - Use perguntas específicas para melhores contextos.
-   - Monitore logs para erros (ex: rate limits, encoding).
-   - Para Colab: Abra o notebook e siga as células.
+**Quando usar**:
+- `truncar`: Rápido, preserva original.
+- `resumir`: Melhor para contextos muito grandes, mas usa tokens extras.
+
+### System Prompts Personalizados
+
+Personalize comportamento dos modelos:
+
+```bash
+# Via arquivo
+python run.py --system_queries_file meu_prompt_queries.txt --system_resposta_file meu_prompt_resposta.txt
+
+# Ou diretamente (use com aspas)
+python run.py --system_queries "Você é um especialista jurídico..."
+```
+
+### Ground Truths
+
+Forneça respostas ideais para métricas mais precisas:
+
+```bash
+python run.py --perguntas "O que é LGPD?" --ground_truth "Lei Geral de Proteção de Dados (Lei nº 13.709/2018)"
+```
+
+Sem ground truth, o sistema gera automaticamente (aproximado).
+
+## 📊 Métricas Explicadas
+
+O sistema avalia respostas com métricas RAGAS + textuais:
+
+### Métricas RAGAS (Avaliam Qualidade RAG)
+- **Faithfulness (Fidelidade)**: Resposta consistente com contexto? (0-1, alto = fiel).
+- **Answer Relevancy (Relevância)**: Resposta relevante para pergunta? (0-1, alto = relevante).
+- **Context Precision (Precisão do Contexto)**: Contextos recuperados são relevantes/úteis? (0-1, alto = precisos).
+
+### Métricas Textuais (Comparação com Ground Truth)
+- **ROUGE-1/2**: Similaridade n-gram (0-1, alto = similar).
+- **BERTScore**: Similaridade semântica via embeddings (0-1, alto = próximo).
+
+### Interpretação
+- **Alto em tudo**: Resposta excelente, bem fundamentada.
+- **Baixo Faithfulness**: Modelo "inventou" info.
+- **Baixo Relevancy**: Resposta off-topic.
+- **Baixo Context Precision**: Busca ruim, contextos irrelevantes.
+
+## 🌐 Interface Web Detalhada
+
+Execute `python launcher.py` na pasta `web_interface`.
+
+### Funcionalidades
+- **Seleção de Modelos**: Escolha de lista pré-definida ou customizada.
+- **Perguntas**: Texto livre ou upload CSV.
+- **Configurações**: num_queries, modo_contexto, system prompts.
+- **Resultados**: Tabela comparativa, issues identificados, downloads.
+
+### Issues Identificados
+A interface mostra problemas como:
+- "Queries JSON malformado"
+- "Nenhum contexto recuperado"
+- "Resposta vazia"
+
+Ajuda depurar execuções.
+
+## 📁 Estrutura de Arquivos
+
+```
+EvalAItoNomartiveConsults/
+├── main.py              # Pipeline principal
+├── models.py            # Geração de queries/respostas
+├── metrics.py           # Avaliação de métricas
+├── retriever.py         # Busca de contextos LexML
+├── report.py            # Geração de relatórios
+├── run.py               # CLI
+├── web_interface/       # Interface Streamlit
+│   ├── app.py
+│   └── launcher.py
+├── results/             # Saídas (JSON, CSV)
+├── requirements.txt
+├── .env                 # Configurações (não versionado)
+└── README.md
+```
+
+## 🔧 Solução de Problemas
+
+### Inicialização Lenta
+- **Causa**: Carregamento de embeddings na primeira avaliação.
+- **Solução**: Aguarde; próximas execuções são rápidas (cache).
+
+### Erro de API
+- Verifique `OPENAI_API_KEY` no `.env`.
+- Créditos insuficientes? Recarregue no OpenRouter.
+
+### Contextos Vazios
+- Queries ruins? Verifique issues.
+- Rede? Teste conectividade com LexML.
+
+### Modelo Não Responde
+- Limite de tokens? Use `modo_contexto truncar`.
+- Erro de parsing? Sistema tem fallbacks.
+
+### Cache de Modelos
+- Delete `HF_Cache/` para forçar re-download se corrompido.
+
+## 📈 Exemplos de Uso
+
+### Comparação Básica
+```bash
+python run.py --quick_eval --modelos meta-llama/llama-3.3-70b-instruct openai/gpt-3.5-turbo
+```
+
+### Avaliação Jurídica Detalhada
+```bash
+python run.py \
+  --perguntas "Quais são os direitos trabalhistas no Brasil?" \
+  --ground_truth "CLT prevê jornada de 8h, férias, etc." \
+  --num_queries 5 \
+  --modo_contexto resumir \
+  --modelos anthropic/claude-3.5-sonnet
+```
+
+### Relatório Final
+Após execução, veja `results/`:
+- `resultados.json`: Dados brutos.
+- `comparacao_modelos.json`: Rankings e médias.
+- `resultados.csv`: Planilha.
+
+## 🤝 Contribuição
+
+Issues e PRs bem-vindos! Para mudanças grandes, abra issue primeiro.
+
+## 📄 Licença
+
+MIT License - veja LICENSE para detalhes.
+
+---
+
+**Dúvidas?** Abra issue no GitHub ou consulte a documentação do OpenRouter.

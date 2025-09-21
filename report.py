@@ -38,8 +38,7 @@ def salvar_relatorio_comparacao(resultados):
 def salvar_csv(resultados):
     campos_csv = [
         'pergunta', 'modelo', 'resposta', 'queries_geradas',
-        'faithfulness', 'answer_relevancy', 'rouge_1_f1', 'rouge_2_f1', 'bertscore_f1',
-        'precision', 'recall', 'f1_custom',
+        'faithfulness', 'answer_relevancy', 'context_precision', 'rouge_1_f1', 'rouge_2_f1', 'bertscore_f1',
         'num_contextos', 'tempo_geracao_queries', 'tempo_resposta', 'tokens_resposta'
     ]
 
@@ -69,19 +68,16 @@ def gerar_relatorio_comparacao(resultados):
 
         if modelo not in modelos_stats:
             modelos_stats[modelo] = {
-                'faithfulness': [], 'answer_relevancy': [], 'rouge_1_f1': [], 'rouge_2_f1': [], 'bertscore_f1': [],
-                'precision': [], 'recall': [], 'f1_custom': [],
+                'faithfulness': [], 'answer_relevancy': [], 'context_precision': [], 'rouge_1_f1': [], 'rouge_2_f1': [], 'bertscore_f1': [],
                 'tempos_queries': [], 'tempos_resposta': [], 'num_contextos': [], 'tokens_resposta': []
             }
 
         modelos_stats[modelo]['faithfulness'].append(resultado.get('faithfulness', 0.0))
         modelos_stats[modelo]['answer_relevancy'].append(resultado.get('answer_relevancy', 0.0))
+        modelos_stats[modelo]['context_precision'].append(resultado.get('context_precision', 0.0))
         modelos_stats[modelo]['rouge_1_f1'].append(resultado.get('rouge_1_f1', 0.0))
         modelos_stats[modelo]['rouge_2_f1'].append(resultado.get('rouge_2_f1', 0.0))
         modelos_stats[modelo]['bertscore_f1'].append(resultado.get('bertscore_f1', 0.0))
-        modelos_stats[modelo]['precision'].append(resultado.get('precision', 0.0))
-        modelos_stats[modelo]['recall'].append(resultado.get('recall', 0.0))
-        modelos_stats[modelo]['f1_custom'].append(resultado.get('f1_custom', 0.0))
         modelos_stats[modelo]['tempos_queries'].append(resultado.get('tempo_geracao_queries', 0.0))
         modelos_stats[modelo]['tempos_resposta'].append(resultado.get('tempo_resposta', 0.0))
         modelos_stats[modelo]['num_contextos'].append(resultado.get('num_contextos', 0))
@@ -113,6 +109,7 @@ def gerar_relatorio_comparacao(resultados):
             comparacao['comparacao_por_pergunta'][pergunta]['modelos'][modelo] = {
                 'faithfulness': faith,
                 'answer_relevancy': relevancy,
+                'context_precision': resultado.get('context_precision', 0.0),
                 'rouge_1_f1': resultado.get('rouge_1_f1', 0.0),
                 'rouge_2_f1': resultado.get('rouge_2_f1', 0.0),
                 'bertscore_f1': resultado.get('bertscore_f1', 0.0),
@@ -133,12 +130,10 @@ def gerar_relatorio_comparacao(resultados):
         comparacao['estatisticas_por_modelo'][modelo] = {
             'faithfulness_media': avg(stats['faithfulness']),
             'answer_relevancy_media': avg(stats['answer_relevancy']),
+            'context_precision_media': avg(stats['context_precision']),
             'rouge_1_f1_media': avg(stats['rouge_1_f1']),
             'rouge_2_f1_media': avg(stats['rouge_2_f1']),
             'bertscore_f1_media': avg(stats['bertscore_f1']),
-            'precision_media': avg(stats['precision']),
-            'recall_media': avg(stats['recall']),
-            'f1_custom_media': avg(stats['f1_custom']),
             'tempo_queries_medio': avg(stats['tempos_queries']),
             'tempo_resposta_medio': avg(stats['tempos_resposta']),
             'contextos_medio': avg(stats['num_contextos']),
