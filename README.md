@@ -1,6 +1,6 @@
 # EvalAItoNomartiveConsults
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1i2NHH48N4ZOdk9Mt8jYa9ffSLSfnQHMh?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1HThgioW620LWUm4G6vCqE17_tcxtsdUf?usp=sharing)
 
 Uma ferramenta para avaliação comparativa de modelos de IA em consultas jurídicas brasileiras. O sistema gera queries de busca, coleta contextos legais, produz respostas e avalia métricas como faithfulness, relevância e similaridade textual.
 
