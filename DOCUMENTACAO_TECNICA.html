@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EvalAItoNomartiveConsults - Documentação Técnica</title>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f9fa; color: #222; margin: 0; padding: 0; }
+    .container { max-width: 900px; margin: 40px auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px #0001; padding: 40px 32px; }
+    h1, h2, h3 { color: #2a4d7a; }
+    h1 { border-bottom: 2px solid #e0e0e0; padding-bottom: 8px; }
+    nav { margin-bottom: 32px; }
+    nav ul { list-style: none; padding: 0; }
+    nav ul li { margin: 8px 0; }
+    nav ul li a { color: #2a4d7a; text-decoration: none; font-weight: 500; }
+    nav ul li a:hover { text-decoration: underline; }
+    code, pre { background: #f3f3f3; border-radius: 4px; padding: 2px 6px; font-size: 1em; }
+    .section { margin-bottom: 36px; }
+    .file-list, .tech-list, .metric-list, .ref-list { margin: 0 0 0 18px; }
+    .module-title { margin-top: 18px; }
+    .footer { color: #888; font-size: 0.95em; margin-top: 40px; text-align: center; }
+    @media (max-width: 600px) { .container { padding: 16px 4vw; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>EvalAItoNomartiveConsults<br><small style="font-size:0.5em;color:#555;">Documentação Técnica &mdash; Setembro 2025</small></h1>
+    <nav>
+      <ul>
+        <li><a href="#visao-geral">1. Visão Geral</a></li>
+        <li><a href="#tecnologias">2. Tecnologias Utilizadas</a></li>
+        <li><a href="#estrutura">3. Estrutura de Pastas e Arquivos</a></li>
+        <li><a href="#modulos">4. Descrição dos Módulos</a></li>
+        <li><a href="#pipeline">5. Pipeline de Execução</a></li>
+        <li><a href="#metricas">6. Métricas de Avaliação</a></li>
+        <li><a href="#web">7. Interface Web</a></li>
+        <li><a href="#instalacao">8. Instalação e Execução</a></li>
+        <li><a href="#problemas">9. Solução de Problemas</a></li>
+        <li><a href="#referencias">10. Referências</a></li>
+      </ul>
+    </nav>
+
+    <div class="section" id="visao-geral">
+      <h2>1. Visão Geral</h2>
+      <p>O <b>EvalAItoNomartiveConsults</b> é uma ferramenta para avaliação comparativa de modelos de IA em consultas jurídicas brasileiras, automatizando o pipeline RAG (Retrieval-Augmented Generation) e fornecendo métricas detalhadas de qualidade.</p>
+    </div>
+
+    <div class="section" id="tecnologias">
+      <h2>2. Tecnologias Utilizadas</h2>
+      <ul class="tech-list">
+        <li>Python 3.8+</li>
+        <li>Streamlit (interface web)</li>
+        <li>OpenRouter API (modelos LLM)</li>
+        <li>RAGAS, ROUGE, BERTScore, Sentence Transformers</li>
+        <li>BeautifulSoup, Requests</li>
+        <li>Pandas</li>
+        <li>dotenv</li>
+      </ul>
+    </div>
+
+    <div class="section" id="estrutura">
+      <h2>3. Estrutura de Pastas e Arquivos</h2>
+      <ul class="file-list">
+        <li><b>main.py</b>: Pipeline principal</li>
+        <li><b>models.py</b>: Geração de queries e respostas via LLM</li>
+        <li><b>metrics.py</b>: Avaliação automática das respostas</li>
+        <li><b>retriever.py</b>: Busca de contextos legais na LexML</li>
+        <li><b>report.py</b>: Geração de relatórios (JSON, CSV)</li>
+        <li><b>run.py</b>: CLI para execução do pipeline</li>
+        <li><b>requirements.txt</b>: Dependências</li>
+        <li><b>web_interface/</b>: Interface Streamlit
+          <ul>
+            <li><b>app.py</b>: Interface gráfica</li>
+            <li><b>launcher.py</b>: Setup automatizado</li>
+          </ul>
+        </li>
+        <li><b>results/</b>: Saídas (JSON, CSV)</li>
+      </ul>
+    </div>
+
+    <div class="section" id="modulos">
+      <h2>4. Descrição dos Módulos</h2>
+      <div class="module-title"><b>4.1 main.py</b></div>
+      <p>Orquestra o pipeline: carrega prompts, executa queries, coleta contextos, gera respostas e aciona avaliação e relatórios.</p>
+      <div class="module-title"><b>4.2 models.py</b></div>
+      <p>Implementa integração com modelos LLM via OpenRouter, incluindo retries, prompts customizados e suporte a múltiplos modelos. Utiliza função <code>chamar_openrouter</code> para requisições robustas.</p>
+      <div class="module-title"><b>4.3 metrics.py</b></div>
+      <p>Avalia respostas usando RAGAS (Faithfulness, Relevancy, Context Precision), ROUGE e BERTScore. Permite análise detalhada e logging de métricas.</p>
+      <div class="module-title"><b>4.4 retriever.py</b></div>
+      <p>Realiza buscas na LexML via requests e BeautifulSoup, com paginação, filtros de autoridade e logging estruturado.</p>
+      <div class="module-title"><b>4.5 report.py</b></div>
+      <p>Gera relatórios detalhados em JSON, CSV e rankings comparativos. Cria diretório de resultados automaticamente.</p>
+      <div class="module-title"><b>4.6 run.py</b></div>
+      <p>Interface CLI: permite execução rápida, customizada ou via CSV. Suporta argumentos para modelos, prompts, ground truths, modo de contexto e queries.</p>
+      <div class="module-title"><b>4.7 web_interface/</b></div>
+      <p>Interface gráfica em Streamlit, com seleção de modelos, perguntas, upload de CSV, configuração de prompts e visualização de resultados. O <code>launcher.py</code> automatiza setup de ambiente virtual e dependências.</p>
+    </div>
+
+    <div class="section" id="pipeline">
+      <h2>5. Pipeline de Execução</h2>
+      <ol>
+        <li>Geração de queries (LLM)</li>
+        <li>Busca de contextos (LexML)</li>
+        <li>Geração de respostas (LLM)</li>
+        <li>Avaliação automática (métricas)</li>
+        <li>Geração de relatórios (JSON, CSV)</li>
+      </ol>
+    </div>
+
+    <div class="section" id="metricas">
+      <h2>6. Métricas de Avaliação</h2>
+      <ul class="metric-list">
+        <li><b>Faithfulness</b>: Consistência com contexto</li>
+        <li><b>Answer Relevancy</b>: Relevância para pergunta</li>
+        <li><b>Context Precision</b>: Precisão dos contextos</li>
+        <li><b>ROUGE-1/2</b>: Similaridade textual</li>
+        <li><b>BERTScore</b>: Similaridade semântica</li>
+      </ul>
+    </div>
+
+    <div class="section" id="web">
+      <h2>7. Interface Web</h2>
+      <ul>
+        <li><b>Streamlit</b>: Interface amigável, seleção de modelos, perguntas, upload de CSV, configuração de prompts, visualização e download de resultados.</li>
+        <li><b>launcher.py</b>: Cria venv, instala dependências e executa app.</li>
+      </ul>
+    </div>
+
+    <div class="section" id="instalacao">
+      <h2>8. Instalação e Execução</h2>
+      <ol>
+        <li>Clone o repositório</li>
+        <li>Execute <code>python launcher.py</code> em <code>web_interface/</code> para interface web</li>
+        <li>Ou use <code>python run.py</code> para CLI</li>
+        <li>Configure <code>.env</code> com sua API Key do OpenRouter</li>
+      </ol>
+    </div>
+
+    <div class="section" id="problemas">
+      <h2>9. Solução de Problemas</h2>
+      <ul>
+        <li>Inicialização lenta: aguarde carregamento de embeddings</li>
+        <li>Erro de API: verifique chave e créditos</li>
+        <li>Contextos vazios: revise queries e conectividade</li>
+        <li>Limite de tokens: use <code>modo_contexto truncar</code></li>
+      </ul>
+    </div>
+
+    <div class="section" id="referencias">
+      <h2>10. Referências</h2>
+      <ul class="ref-list">
+        <li><a href="https://openrouter.ai/" target="_blank">OpenRouter</a></li>
+        <li><a href="https://github.com/explodinggradients/ragas" target="_blank">RAGAS</a></li>
+        <li><a href="https://streamlit.io/" target="_blank">Streamlit</a></li>
+        <li><a href="https://www.lexml.gov.br/" target="_blank">LexML</a></li>
+      </ul>
+    </div>
+
+    <div class="footer">
+      <hr>
+      <p>Documentação técnica gerada para o projeto EvalAItoNomartiveConsults &mdash; Setembro 2025</p>
+    </div>
+  </div>
+</body>
+</html>
