@@ -1,6 +1,6 @@
 # EvalAItoNomartiveConsults
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1HThgioW620LWUm4G6vCqE17_tcxtsdUf?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1WI8PBbMrFzPV9pGxi9rYWC253gCYqX0v?usp=sharing)
 
 Uma ferramenta completa para avaliação comparativa de modelos de IA em consultas jurídicas brasileiras. O sistema automatiza o pipeline RAG (Retrieval-Augmented Generation): gera queries de busca, coleta contextos legais da LexML, produz respostas e avalia múltiplas métricas de qualidade.
 
@@ -76,7 +76,7 @@ python run.py --help
 
 ### Notebook Colab
 
-Abra o [notebook Colab](https://colab.research.google.com/drive/1HThgioW620LWUm4G6vCqE17_tcxtsdUf?usp=sharing) para execução na nuvem.
+Abra o [notebook Colab](https://colab.research.google.com/drive/1WI8PBbMrFzPV9pGxi9rYWC253gCYqX0v?usp=sharing) para execução na nuvem.
 
 ## ⚙️ Configurações Avançadas
 
