@@ -80,20 +80,21 @@
 
     <div class="section" id="modulos">
       <h2>4. Descrição dos Módulos</h2>
+      <p>Cada módulo é independente, mas interage via funções e dados compartilhados. O sistema é baseado em Python puro, sem frameworks pesados além do necessário.</p>
       <div class="module-title"><b>4.1 main.py</b></div>
-      <p>Orquestra o pipeline: carrega prompts, executa queries, coleta contextos, gera respostas e aciona avaliação e relatórios.</p>
+      <p>Orquestra o pipeline completo. Carrega configurações de <code>config</code> (dicionário com prompts, perguntas, etc.), chama <code>consultar_modelos</code> para gerar queries/respostas, <code>avaliar_respostas</code> para métricas, e <code>salvar_resultados</code> para relatórios. Usa logging para debug.</p>
       <div class="module-title"><b>4.2 models.py</b></div>
-      <p>Implementa integração com modelos LLM via OpenRouter, incluindo retries, prompts customizados e suporte a múltiplos modelos. Utiliza função <code>chamar_openrouter</code> para requisições robustas.</p>
+      <p>Core da integração LLM. <code>chamar_openrouter</code> faz requisições HTTP robustas com retries (até 5 tentativas, backoff exponencial). Suporta JSON output para queries estruturadas. Modelos são passados como strings (ex.: "google/gemini-2.5-flash").</p>
       <div class="module-title"><b>4.3 metrics.py</b></div>
-      <p>Avalia respostas usando RAGAS (Faithfulness, Relevancy, Context Precision), ROUGE e BERTScore. Permite análise detalhada e logging de métricas.</p>
+      <p>Usa RAGAS para métricas LLM-based (Faithfulness, etc.) e bibliotecas como ROUGE/BERTScore para textuais. Carrega embeddings HuggingFace uma vez. Processa listas de respostas, contextos e perguntas.</p>
       <div class="module-title"><b>4.4 retriever.py</b></div>
-      <p>Realiza buscas na LexML via requests e BeautifulSoup, com paginação, filtros de autoridade e logging estruturado.</p>
+      <p>Busca web na LexML (portal legislativo brasileiro). Usa BeautifulSoup para parsing HTML, urllib para encoding. Suporta filtros por autoridade (Federal, Estadual, etc.) e paginação. Retorna lista de trechos relevantes.</p>
       <div class="module-title"><b>4.5 report.py</b></div>
-      <p>Gera relatórios detalhados em JSON, CSV e rankings comparativos. Cria diretório de resultados automaticamente.</p>
+      <p>Gera saídas estruturadas: JSON detalhado, CSV tabular, JSON comparativo com rankings. Cria pasta <code>results/</code> automaticamente. Usa <code>json.dump</code> e <code>csv.writer</code> para exportação.</p>
       <div class="module-title"><b>4.6 run.py</b></div>
-      <p>Interface CLI: permite execução rápida, customizada ou via CSV. Suporta argumentos para modelos, prompts, ground truths, modo de contexto e queries.</p>
+      <p>CLI wrapper. Usa <code>argparse</code> para argumentos. Chama <code>run_pipeline</code> de <code>main.py</code> com config montado. Suporta modos: rápido, customizado, CSV.</p>
       <div class="module-title"><b>4.7 web_interface/</b></div>
-      <p>Interface gráfica em Streamlit, com seleção de modelos, perguntas, upload de CSV, configuração de prompts e visualização de resultados. O <code>launcher.py</code> automatiza setup de ambiente virtual e dependências.</p>
+      <p><b>app.py</b>: Streamlit app com widgets (text_input, radio, file_uploader). Processa inputs, chama pipeline, exibe resultados em tabelas/dataframes. <b>launcher.py</b>: Script de setup; cria venv com <code>venv</code>, instala via pip, executa Streamlit.</p>
     </div>
 
     <div class="section" id="pipeline">
@@ -109,31 +110,84 @@
 
     <div class="section" id="metricas">
       <h2>6. Métricas de Avaliação</h2>
+      <p>O sistema utiliza métricas RAGAS (para qualidade do pipeline RAG) e métricas textuais (comparação com ground truth). Todas as métricas variam de 0 a 1, onde valores mais altos indicam melhor desempenho.</p>
+      <h3>Métricas RAGAS</h3>
       <ul class="metric-list">
-        <li><b>Faithfulness</b>: Consistência com contexto</li>
-        <li><b>Answer Relevancy</b>: Relevância para pergunta</li>
-        <li><b>Context Precision</b>: Precisão dos contextos</li>
-        <li><b>ROUGE-1/2</b>: Similaridade textual</li>
-        <li><b>BERTScore</b>: Similaridade semântica</li>
+        <li><b>Faithfulness (Fidelidade)</b>: Mede se a resposta é consistente com o contexto fornecido. Avalia se o modelo "inventa" informações não presentes no contexto. Exemplo: Resposta fiel = 0.9; resposta inventada = 0.3.</li>
+        <li><b>Answer Relevancy (Relevância da Resposta)</b>: Verifica se a resposta é relevante para a pergunta feita, sem desvios. Usa um LLM para avaliar se cada parte da resposta responde à pergunta.</li>
+        <li><b>Context Precision (Precisão do Contexto)</b>: Avalia se os contextos recuperados são úteis e relevantes para a pergunta. Contextos irrelevantes reduzem a pontuação.</li>
       </ul>
+      <h3>Métricas Textuais (com Ground Truth)</h3>
+      <ul class="metric-list">
+        <li><b>ROUGE-1/2</b>: Mede similaridade textual baseada em n-gramas (palavras individuais ou pares). ROUGE-1 compara unigramas; ROUGE-2 compara bigramas. Útil para detectar cópia direta do contexto.</li>
+        <li><b>BERTScore</b>: Usa embeddings BERT para medir similaridade semântica entre resposta e ground truth. Mais avançado que ROUGE, captura significado além de palavras exatas.</li>
+      </ul>
+      <p><b>Interpretação Geral</b>: Alto em tudo = resposta excelente. Baixo Faithfulness = modelo inventou info. Baixo Relevancy = resposta off-topic. Baixo Context Precision = busca ruim.</p>
     </div>
 
     <div class="section" id="web">
       <h2>7. Interface Web</h2>
+      <p>A interface web é construída com Streamlit para facilitar o uso sem necessidade de linha de comando. Execute <code>python launcher.py</code> na pasta <code>web_interface/</code> para iniciar.</p>
+      <h3>Funcionalidades</h3>
       <ul>
-        <li><b>Streamlit</b>: Interface amigável, seleção de modelos, perguntas, upload de CSV, configuração de prompts, visualização e download de resultados.</li>
-        <li><b>launcher.py</b>: Cria venv, instala dependências e executa app.</li>
+        <li><b>Seleção de Modelos</b>: Lista pré-definida ou customizada (ex.: meta-llama/llama-3.3-70b-instruct, openai/gpt-4o).</li>
+        <li><b>Perguntas</b>: Texto livre, uma por linha, ou upload de CSV com colunas 'pergunta' e 'ground_truth'.</li>
+        <li><b>Configurações</b>: num_queries (padrão 3), modo_contexto (truncar/resumir), system prompts customizados.</li>
+        <li><b>Resultados</b>: Tabela comparativa, métricas médias, downloads de JSON/CSV.</li>
       </ul>
+      <h3>Issues Identificados</h3>
+      <p>A interface mostra problemas comuns durante a execução para facilitar depuração:</p>
+      <ul>
+        <li><b>"Queries JSON malformado"</b>: O modelo gerou queries inválidas (JSON incorreto). Verifique system prompt ou modelo.</li>
+        <li><b>"Nenhum contexto recuperado"</b>: Busca na LexML falhou. Verifique conectividade ou queries ruins.</li>
+        <li><b>"Resposta vazia"</b>: Modelo não respondeu. Pode ser erro de API, limite de tokens ou prompt inadequado.</li>
+        <li><b>"Erro de parsing"</b>: Falha ao processar resposta do modelo. Sistema tem fallbacks, mas revise logs.</li>
+      </ul>
+      <p><b>launcher.py</b>: Automatiza criação de ambiente virtual, instalação de dependências e execução do app Streamlit.</p>
     </div>
 
     <div class="section" id="instalacao">
       <h2>8. Instalação e Execução</h2>
+      <h3>Instalação</h3>
       <ol>
-        <li>Clone o repositório</li>
-        <li>Execute <code>python launcher.py</code> em <code>web_interface/</code> para interface web</li>
-        <li>Ou use <code>python run.py</code> para CLI</li>
-        <li>Configure <code>.env</code> com sua API Key do OpenRouter</li>
+        <li>Clone o repositório: <code>git clone https://github.com/expagepay/EvalAItoNomartiveConsults.git</code></li>
+        <li>Configure <code>.env</code> na raiz: <code>OPENAI_API_KEY=sk-or-v1-sua-chave-openrouter</code> (obtenha em <a href="https://openrouter.ai/keys" target="_blank">OpenRouter Keys</a>)</li>
+        <li>Para interface web: <code>cd web_interface && python launcher.py</code> (cria venv automaticamente)</li>
+        <li>Para CLI: Instale dependências manualmente: <code>pip install -r requirements.txt</code></li>
       </ol>
+      <h3>Execução via CLI (<code>run.py</code>)</h3>
+      <p>O script <code>run.py</code> aceita diversos argumentos para customização. Use <code>python run.py --help</code> para lista completa.</p>
+      <h4>Argumentos Principais</h4>
+      <ul>
+        <li><b>--quick_eval</b>: Avaliação rápida com perguntas padrão (3 perguntas jurídicas brasileiras).</li>
+        <li><b>--perguntas "Pergunta 1" "Pergunta 2"</b>: Lista de perguntas customizadas.</li>
+        <li><b>--ground_truth "Resposta ideal 1" "Resposta ideal 2"</b>: Respostas ideais para métricas textuais (opcional).</li>
+        <li><b>--csv_file caminho/arquivo.csv</b>: Arquivo CSV com colunas 'pergunta' e 'ground_truth'.</li>
+        <li><b>--modelos modelo1 modelo2</b>: Modelos a comparar (ex.: meta-llama/llama-3.3-70b-instruct openai/gpt-4o).</li>
+        <li><b>--num_queries N</b>: Número de queries de busca por pergunta (padrão 3, recomendado 3-5).</li>
+        <li><b>--modo_contexto truncar|resumir</b>: Estratégia para contextos grandes (truncar: regressivo; resumir: usa LLM para resumo).</li>
+        <li><b>--system_queries "Prompt customizado"</b>: Prompt para geração de queries.</li>
+        <li><b>--system_resposta "Prompt customizado"</b>: Prompt para geração de respostas.</li>
+        <li><b>--system_queries_file caminho/prompt.txt</b>: Arquivo com prompt para queries.</li>
+        <li><b>--system_resposta_file caminho/prompt.txt</b>: Arquivo com prompt para respostas.</li>
+      </ul>
+      <h4>Uso de Modelos Personalizados da OpenRouter</h4>
+      <p>Qualquer modelo disponível no <a href="https://openrouter.ai/models" target="_blank">OpenRouter</a> pode ser usado. Formato: <code>provedor/modelo</code>.</p>
+      <ul>
+        <li><b>Exemplos de Modelos</b>:
+          <ul>
+            <li>OpenAI: <code>openai/gpt-4o</code>, <code>openai/gpt-3.5-turbo</code></li>
+            <li>Anthropic: <code>anthropic/claude-3.5-sonnet</code></li>
+            <li>Google: <code>google/gemini-pro-1.5</code>, <code>google/gemini-2.0-flash-exp</code></li>
+            <li>Meta: <code>meta-llama/llama-3.3-70b-instruct</code></li>
+            <li>Mistral: <code>mistralai/mistral-7b-instruct</code></li>
+          </ul>
+        </li>
+        <li><b>Dicas</b>: Modelos maiores (&gt;100k tokens) são melhores para jurídico. Verifique custos e limites no OpenRouter.</li>
+        <li><b>Comando Exemplo</b>: <code>python run.py --modelos openai/gpt-4o anthropic/claude-3.5-sonnet --perguntas "O que é LGPD?" --num_queries 5</code></li>
+      </ul>
+      <h3>Execução via Interface Web</h3>
+      <p>Execute <code>python launcher.py</code> em <code>web_interface/</code>. Acesse <code>http://localhost:8501</code>. Configure via formulários.</p>
     </div>
 
     <div class="section" id="problemas">
